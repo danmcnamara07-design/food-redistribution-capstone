@@ -1,0 +1,17 @@
+{
+  "surplus_forecast_mae_reduction_vs_naive": 0.5809699794144034,
+  "surplus_forecast_p10_p90_coverage": 0.8746565934065934,
+  "risk_model_used": "logistic",
+  "risk_pr_auc": 0.42922217426086334,
+  "share_placed_baseline": 0.5882821622948601,
+  "share_placed_full": 0.7719751842798687,
+  "extra_kg_placed_full_vs_baseline": 19430.01000000001,
+  "min_fill_rate_baseline": 0.027317412718677533,
+  "min_fill_rate_full": 0.35396376236764104,
+  "test_days": 84,
+  "seeds": [
+    0,
+    1,
+    2
+  ]
+}
