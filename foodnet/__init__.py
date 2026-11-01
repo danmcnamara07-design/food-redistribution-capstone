@@ -1,0 +1,1 @@
+"""Food redistribution capstone prototype."""
