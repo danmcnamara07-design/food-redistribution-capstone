@@ -1,0 +1,26 @@
+{
+  "best_tree_params": {
+    "max_depth": 6,
+    "min_impurity_decrease": 0.0001,
+    "min_samples_leaf": 50
+  },
+  "test_pr_auc": {
+    "always_collected": 0.19825,
+    "logistic": 0.42922217426086334,
+    "gbm": 0.41771779721645136,
+    "decision_tree": 0.36292956147200356,
+    "decision_tree_unweighted": 0.3601800308474262,
+    "random_forest": 0.41706246144544523
+  },
+  "test_f1": {
+    "always_collected": 0.0,
+    "logistic": 0.44010195412064573,
+    "gbm": 0.4447403462050599,
+    "decision_tree": 0.420115709835336,
+    "decision_tree_unweighted": 0.4175347222222222,
+    "random_forest": 0.44573643410852715
+  },
+  "top_permutation_feature": "distance_km",
+  "top_impurity_feature": "lead_time_h",
+  "root_split_agreement": 0.9
+}

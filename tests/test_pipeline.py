@@ -92,3 +92,19 @@ def test_risk_models_beat_base_rate(net):
     r = time_split_eval(net["collections"]).set_index("model")
     assert r.loc["logistic", "pr_auc"] > r.loc["always_collected", "pr_auc"]
     assert r.loc["gbm", "roc_auc"] > 0.6
+
+
+def test_tree_folds_follow_time_order(net):
+    from foodnet.risk.tree import time_folds, time_split
+    train, _ = time_split(net["collections"])
+    for tr, va in time_folds(train["date"], n_folds=3):
+        assert train["date"].iloc[tr].max() < train["date"].iloc[va].min()
+
+
+def test_tuned_tree_beats_base_rate(net):
+    from foodnet.risk.tree import compare_models, time_split
+    train, test = time_split(net["collections"])
+    r, _ = compare_models(train, test, dict(max_depth=4, min_samples_leaf=30))
+    r = r.set_index("model")
+    assert r.loc["decision_tree", "pr_auc"] > r.loc["always_collected", "pr_auc"]
+    assert r.loc["decision_tree", "recall"] > 0
