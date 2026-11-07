@@ -74,6 +74,40 @@ All tables are written to `results/` as CSV on each run.
 
 ![Forecast example](results/forecast_example.png)
 
+## Decision-tree experiment (module 9)
+
+`scripts/run_tree_experiment.py` asks whether a decision tree helps the uncollected-listing predictor. The tree is treated as an explainable benchmark, not the production model. Same data and time split as above: earliest 80% of collections to train, latest 20% to test, about 20% of collections fail.
+
+**How deep?** Depth 2 to 12 with expanding-window cross-validation over whole days, so validation is always later than training. Validation PR-AUC peaks at depth 6 (0.37) while training PR-AUC keeps climbing to 0.51, so deeper trees are memorising training weeks.
+
+![Depth sweep](results/tree_depth_sweep.png)
+
+**Tuning.** A grid over `max_depth`, `min_samples_leaf` (20, 30, 50) and `min_impurity_decrease`, with failed collections weighted up (`class_weight="balanced"`). Best: depth 6, 50 per leaf. Leaf size mattered more than impurity decrease.
+
+**Results on the test period.** Each model's threshold is the F1-best one on the last training fold, never chosen on test data.
+
+| Model | PR-AUC | Precision | Recall | F1 | Accuracy | Missed failures (FN) | False alarms (FP) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Always collected | 0.20 | n/a | 0 | 0 | 0.80 | 793 | 0 |
+| Logistic regression | 0.43 | 0.33 | 0.65 | 0.44 | 0.67 | 275 | 1,043 |
+| Gradient boosting | 0.42 | 0.34 | 0.63 | 0.44 | 0.69 | 292 | 959 |
+| Decision tree (tuned) | 0.36 | 0.33 | 0.60 | 0.42 | 0.67 | 321 | 982 |
+| Random forest | 0.42 | 0.36 | 0.58 | 0.45 | 0.71 | 333 | 811 |
+
+- Accuracy misleads: always predicting "collected" scores 80% and catches no failures.
+- The single tree is the weakest real model. Combining many trees (random forest) closes the gap but is no better than logistic regression, which fits because the synthetic failure process is itself logistic.
+- Class weighting barely changed the tree's ranking (PR-AUC 0.363 vs 0.360 unweighted); its main effect is moving the threshold, which the F1 threshold already does.
+
+**Which features matter?** Permutation importance on the test period ranks distance, lead time and the volunteer's past completion rate first. The tree's own importance puts lead time slightly ahead of distance and gives some weight to `listing_kg` (691 distinct values) even though shuffling it costs nothing, which is the many-values bias permutation importance is there to catch.
+
+**Stability.** Across 20 bootstrap refits the root split was lead time every time (18 raw, 2 as `log_lead`, the same signal), and the second level was distance in 19 of 20. So the top of the tree is stable on this data; only the top two levels were checked.
+
+**Rules a coordinator can read.** `results/tree_rules.txt` holds a depth-3 tree: it flags short notice (under 4 hours) with a trip over about 10 km, short notice with a volunteer whose completion rate is under 82%, and, with more notice, a trip over about 9 km with a volunteer under 79%.
+
+Conclusion: use the tree to explain why collections fail, and keep logistic regression or boosting to predict them.
+
+Outputs: `tree_depth_sweep.csv`, `tree_grid_search.csv`, `tree_model_comparison.csv`, `tree_permutation_importance.csv`, `tree_stability.csv`, `tree_rules.txt`, `tree_summary.json`, `tree_depth_sweep.png`.
+
 ## Run it
 
 Requires Python 3.10+.
@@ -82,7 +116,8 @@ Requires Python 3.10+.
 pip install -r requirements.txt
 python scripts/run_all.py --quick   # small network, about 20 seconds
 python scripts/run_all.py           # full run, about 3 minutes
-python -m pytest -q                 # 8 tests, about 5 seconds
+python scripts/run_tree_experiment.py   # decision-tree experiment, about 15 seconds
+python -m pytest -q                 # 10 tests, about 8 seconds
 ```
 
 `run_all.py` regenerates the data in `data/` (git-ignored) and writes every table and chart to `results/`. The notebook `notebooks/walkthrough.ipynb` steps through each component interactively.
@@ -112,8 +147,10 @@ foodnet/
   forecasting/metrics.py    MAE, WAPE, pinball loss, coverage
   matching/engine.py        greedy baseline + optimiser
   risk/predictor.py         uncollected-listing predictor
+  risk/tree.py              decision-tree tuning, comparison and importance (module 9)
   simulation/simulate.py    end-to-end strategy comparison
 scripts/run_all.py          one command: data -> models -> simulation -> results
+scripts/run_tree_experiment.py  decision-tree experiment for the risk predictor
 notebooks/walkthrough.ipynb interactive tour
 tests/test_pipeline.py      reproducibility, leakage, safety constraints, model sanity
 results/                    tables and charts from the last full run

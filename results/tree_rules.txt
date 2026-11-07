@@ -1,0 +1,24 @@
+Depth-3 decision tree for failed collections (class-weighted; 'class: 1' = likely to fail)
+
+|--- lead_time_h <= 3.98
+|   |--- distance_km <= 10.37
+|   |   |--- volunteer_past_rate <= 0.82
+|   |   |   |--- class: 1
+|   |   |--- volunteer_past_rate >  0.82
+|   |   |   |--- class: 0
+|   |--- distance_km >  10.37
+|   |   |--- recipient_accept_rate <= 0.92
+|   |   |   |--- class: 1
+|   |   |--- recipient_accept_rate >  0.92
+|   |   |   |--- class: 1
+|--- lead_time_h >  3.98
+|   |--- distance_km <= 9.34
+|   |   |--- volunteer_past_rate <= 0.79
+|   |   |   |--- class: 0
+|   |   |--- volunteer_past_rate >  0.79
+|   |   |   |--- class: 0
+|   |--- distance_km >  9.34
+|   |   |--- volunteer_past_rate <= 0.79
+|   |   |   |--- class: 1
+|   |   |--- volunteer_past_rate >  0.79
+|   |   |   |--- class: 0
